@@ -51,11 +51,27 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        Debug.Log($"[GameManager] EndGame: timeScale={Time.timeScale}, cursorLock={Cursor.lockState}, cursorVisible={Cursor.visible}");
+    }
+
+    private void Update()
+    {
+        // Сторожим состояние курсора во время финального экрана —
+        // если кто-то перебивает блокировку, увидим в логе
+        if (_gameOver && Cursor.lockState != CursorLockMode.None)
+        {
+            Debug.LogWarning($"[GameManager] Курсор кем-то залочен после Game Over! Принудительно разблокирую.");
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     public void RestartGame()
     {
+        Debug.Log("[GameManager] RestartGame() вызван — перезапуск сцены");
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 

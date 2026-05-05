@@ -14,6 +14,9 @@ public class ShipDamageSystem : MonoBehaviour
     [Header("Random Setup")]
     [SerializeField] private int minActiveCracks = 2;
     [SerializeField] private int maxActiveCracks = 5;
+    [SerializeField] private bool randomizePositions = true;
+    [SerializeField] private Transform shipBody;          // объект корабля (если null — берём transform этого объекта)
+    [SerializeField] private float surfaceSearchRadius = 5f;
 
     [Header("Events")]
     public UnityEvent<float> onIntegrityChanged;
@@ -30,11 +33,61 @@ public class ShipDamageSystem : MonoBehaviour
     private void Start()
     {
         RandomizeActiveCracks();
+        RandomizePositions();
 
         _hadCracksAtStart = cracks != null && cracks.Length > 0;
         Debug.Log($"[ShipDamageSystem] Старт: трещин на корабле = {cracks?.Length ?? 0}, HP = {currentHullIntegrity}/{maxHullIntegrity}");
         if (!_hadCracksAtStart)
             Debug.LogWarning("[ShipDamageSystem] Внимание: ни одной трещины не назначено в массиве 'cracks'! Победа не сработает.");
+    }
+
+    private void RandomizePositions()
+    {
+        if (!randomizePositions || cracks == null || cracks.Length == 0) return;
+
+        Transform body = shipBody != null ? shipBody : transform;
+        Vector3 center = body.position;
+
+        // Временно выключаем коллайдеры самих трещин чтобы лучи не цеплялись за них
+        var crackColliders = new List<Collider>();
+        foreach (var crack in cracks)
+        {
+            if (crack == null) continue;
+            foreach (var c in crack.GetComponentsInChildren<Collider>())
+            {
+                if (c.enabled) { crackColliders.Add(c); c.enabled = false; }
+            }
+        }
+
+        int placed = 0;
+        foreach (var crack in cracks)
+        {
+            if (crack == null) continue;
+
+            for (int attempt = 0; attempt < 30; attempt++)
+            {
+                Vector3 dir    = Random.onUnitSphere;
+                Vector3 origin = center + dir * surfaceSearchRadius;
+
+                if (Physics.Raycast(origin, -dir, out RaycastHit hit, surfaceSearchRadius * 2f))
+                {
+                    // Считаем валидным только если попали по самому кораблю (или его дочкам)
+                    if (hit.collider.transform == body || hit.collider.transform.IsChildOf(body))
+                    {
+                        crack.transform.SetParent(body, true);
+                        crack.transform.position = hit.point + hit.normal * 0.02f;
+                        crack.transform.rotation = Quaternion.LookRotation(-hit.normal);
+                        placed++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Возвращаем коллайдеры
+        foreach (var c in crackColliders) if (c != null) c.enabled = true;
+
+        Debug.Log($"[ShipDamageSystem] Размещено случайно {placed}/{cracks.Length} трещин");
     }
 
     private void RandomizeActiveCracks()
