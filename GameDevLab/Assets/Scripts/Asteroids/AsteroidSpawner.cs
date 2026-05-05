@@ -26,6 +26,10 @@ public class AsteroidSpawner : MonoBehaviour
     [SerializeField] private int   minMaxAsteroids  = 4;
     [SerializeField] private int   maxMaxAsteroids  = 8;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource impactAudio;
+    [SerializeField] private AudioClip[] impactClips;
+
     private float _timer;
     private float _logTimer;
     private readonly List<GameObject> _active = new();
@@ -103,5 +107,12 @@ public class AsteroidSpawner : MonoBehaviour
         Debug.Log($"[AsteroidSpawner] Астероид попал в корабль! Урон={impactDamage}");
         shipDamageSystem?.TakeDamage(impactDamage);
         CameraShake.Instance?.Shake(1f);
+
+        // Звук удара — случайный из массива клипов для разнообразия
+        if (impactAudio != null && impactClips != null && impactClips.Length > 0)
+        {
+            var clip = impactClips[Random.Range(0, impactClips.Length)];
+            impactAudio.PlayOneShot(clip);
+        }
     }
 }

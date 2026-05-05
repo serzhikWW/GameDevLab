@@ -12,6 +12,8 @@ public class ShipCrack : MonoBehaviour
     [SerializeField] private Color dimColor       = new Color(0.5f, 0.0f, 0.0f);
     [SerializeField] private Color highlightColor = new Color(1.0f, 0.2f, 0.2f);
     [SerializeField] private float pulseSpeed     = 4f;
+    [SerializeField] private float beaconRange    = 3f;
+    [SerializeField] private float beaconMaxIntensity = 5f;
 
     public UnityEvent onSealed;
 
@@ -21,6 +23,7 @@ public class ShipCrack : MonoBehaviour
     private Renderer[] _damagedRenderers;
     private Collider[]  _damagedColliders;
     private MaterialPropertyBlock _propBlock;
+    private Light _beaconLight;
     private static readonly int BaseColor      = Shader.PropertyToID("_BaseColor");
     private static readonly int EmissionColor  = Shader.PropertyToID("_EmissionColor");
 
@@ -43,6 +46,16 @@ public class ShipCrack : MonoBehaviour
 
         _propBlock = new MaterialPropertyBlock();
 
+        // Создаём пульсирующий маяк — точечный свет, чтобы трещина была видна на тёмном корпусе
+        var beaconGO = new GameObject("CrackBeacon");
+        beaconGO.transform.SetParent(transform, false);
+        beaconGO.transform.localPosition = Vector3.zero;
+        _beaconLight = beaconGO.AddComponent<Light>();
+        _beaconLight.type      = LightType.Point;
+        _beaconLight.color     = highlightColor;
+        _beaconLight.range     = beaconRange;
+        _beaconLight.intensity = beaconMaxIntensity;
+
         Debug.Log($"[ShipCrack] '{name}' ready. renderers={_damagedRenderers?.Length}");
 
         ShowDamaged(true);
@@ -63,6 +76,10 @@ public class ShipCrack : MonoBehaviour
             _propBlock.SetColor(EmissionColor, highlightColor * pulse * 2f);
             r.SetPropertyBlock(_propBlock);
         }
+
+        // Пульсация маяка
+        if (_beaconLight != null)
+            _beaconLight.intensity = (0.3f + 0.7f * pulse) * beaconMaxIntensity;
     }
 
     public void ApplyRepair(float amount)
@@ -89,6 +106,10 @@ public class ShipCrack : MonoBehaviour
             r.enabled = false;
         foreach (var c in GetComponentsInChildren<Collider>())
             c.enabled = false;
+
+        // Маяк гасим — починили, не нужен
+        if (_beaconLight != null)
+            _beaconLight.enabled = false;
 
         if (sealedVisual != null)
             sealedVisual.SetActive(true);
