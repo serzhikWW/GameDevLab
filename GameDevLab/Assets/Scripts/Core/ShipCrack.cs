@@ -14,6 +14,7 @@ public class ShipCrack : MonoBehaviour
     [SerializeField] private float pulseSpeed     = 4f;
     [SerializeField] private float beaconRange    = 3f;
     [SerializeField] private float beaconMaxIntensity = 5f;
+    [SerializeField] private bool  hideMeshUseLightOnly = true;   // если true — куб не виден, только пульсирующий свет
 
     public UnityEvent onSealed;
 
@@ -120,10 +121,13 @@ public class ShipCrack : MonoBehaviour
 
     private void ShowDamaged(bool show)
     {
+        // Рендереры — выключаем если включён режим "только свет"
+        bool showRenderers = show && !hideMeshUseLightOnly;
         if (_damagedRenderers != null)
             foreach (var r in _damagedRenderers)
-                if (r != null) r.enabled = show;
+                if (r != null) r.enabled = showRenderers;
 
+        // Коллайдеры оставляем включёнными — нужны для луча сварки
         if (_damagedColliders != null)
             foreach (var c in _damagedColliders)
                 if (c != null) c.enabled = show;

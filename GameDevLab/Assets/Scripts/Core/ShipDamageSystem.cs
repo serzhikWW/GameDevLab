@@ -32,6 +32,7 @@ public class ShipDamageSystem : MonoBehaviour
 
     private void Start()
     {
+        EnsureEnoughCracks();
         RandomizeActiveCracks();
         RandomizePositions();
 
@@ -39,6 +40,35 @@ public class ShipDamageSystem : MonoBehaviour
         Debug.Log($"[ShipDamageSystem] Старт: трещин на корабле = {cracks?.Length ?? 0}, HP = {currentHullIntegrity}/{maxHullIntegrity}");
         if (!_hadCracksAtStart)
             Debug.LogWarning("[ShipDamageSystem] Внимание: ни одной трещины не назначено в массиве 'cracks'! Победа не сработает.");
+    }
+
+    // Если в массиве меньше трещин чем максимум — клонируем первую как трафарет
+    private void EnsureEnoughCracks()
+    {
+        if (cracks == null || cracks.Length == 0)
+        {
+            Debug.LogWarning("[ShipDamageSystem] Cracks пуст — некого клонировать");
+            return;
+        }
+
+        var template = cracks[0];
+        if (template == null) return;
+
+        var list = new List<ShipCrack>(cracks);
+
+        // Хотим иметь в пуле как минимум maxActiveCracks вариантов чтобы рандом работал
+        while (list.Count < maxActiveCracks)
+        {
+            var clone = Instantiate(template, template.transform.parent);
+            clone.name = $"{template.name}_clone{list.Count}";
+            list.Add(clone);
+        }
+
+        if (list.Count != cracks.Length)
+        {
+            Debug.Log($"[ShipDamageSystem] Клонировано трещин: было {cracks.Length}, стало {list.Count}");
+            cracks = list.ToArray();
+        }
     }
 
     private void RandomizePositions()

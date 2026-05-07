@@ -1,0 +1,29 @@
+# ── IDE / Editor / local configs ─────────────────────────────
+.idea/
+.vs/
+.vscode/
+.claude/
+*.csproj
+*.sln
+*.unityproj
+*.suo
+*.user
+*.userprefs
+
+# ── Unity generated (внутри проекта) ─────────────────────────
+GameDevLab/[Ll]ibrary/
+GameDevLab/[Tt]emp/
+GameDevLab/[Oo]bj/
+GameDevLab/[Bb]uild/
+GameDevLab/[Bb]uilds/
+GameDevLab/[Ll]ogs/
+GameDevLab/[Uu]ser[Ss]ettings/
+GameDevLab/[Mm]emoryCaptures/
+GameDevLab/[Rr]ecordings/
+
+# ── Старый дубликат ──────────────────────────────────────────
+UnityProject/
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
